@@ -56,9 +56,7 @@ inner_join(class1,class2,by='名次')
 left_join(class1,class2,by='名次')
 right_join(class1,class2,by='名次')
 
-# TCGA-LUAD数据下载
-setwd('TCGA-LUAD')
-setwd('TCGAdata')
+
 
 
 
