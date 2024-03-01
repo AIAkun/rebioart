@@ -230,7 +230,8 @@ fit <- survfit(Surv(OS.time,OS) ~ group,data = surv)
 summary(fit)
 p.lab <- paste0('P',ifelse(pValue<0.001," <0.001",paste0(" = ",round(pValue,3))))
 library(survminer)
-ggsurvplot(fit,data = surv,
+library(ggplot2)
+gg <- ggsurvplot(fit,data = surv,
            pval = p.lab,
            conf.int = TRUE,#显示置信区间
            risk.table = TRUE,#显示风险表
@@ -248,6 +249,17 @@ ggsurvplot(fit,data = surv,
            ncensor.plot.height=0.25,
            risk.table.y.text=FALSE
            )
+# ggsave(file='surv.png', plot = print(gg))
+pdf( "surv.pdf",width = 5, height = 5)
+print(gg, newpage = FALSE)
 dev.off()
+
+
+
+
+
+
+
+
 
 
