@@ -254,6 +254,74 @@ pdf( "surv.pdf",width = 5, height = 5)
 print(gg, newpage = FALSE)
 dev.off()
 
+# ----------------------------
+# 整理TCGA临床信息
+setwd('TCGA-LUAD')
+setwd('clinical')
+load('luad.gdc_2022.rda')
+library(tidyverse)
+clinical <- as.data.frame(expquery2@colData) %>% .[!duplicated(.$sample),]
+clinical <- clinical[,c('gender','age_at_index','ajcc_pathologic_stage','ajcc_pathologic_t','ajcc_pathologic_n','ajcc_pathologic_m')]
+
+class(clinical$gender)
+table(clinical$gender)
+
+clinical$ajcc_pathologic_stage <- gsub('A','',clinical$ajcc_pathologic_stage)
+clinical$ajcc_pathologic_stage <- gsub('B','',clinical$ajcc_pathologic_stage)
+clinical$ajcc_pathologic_t <- gsub('a','',clinical$ajcc_pathologic_t)
+clinical$ajcc_pathologic_t <- gsub('b','',clinical$ajcc_pathologic_t)
+clinical$ajcc_pathologic_m <- gsub('a','',clinical$ajcc_pathologic_m)
+clinical$ajcc_pathologic_m <- gsub('b','',clinical$ajcc_pathologic_m)
+
+rownames(clinical) <- substring(rownames(clinical),1,16)
+exp_01A <- read.table('tpms01A_log2.txt',sep='\t',row.names = 1,check.names = F,stringsAsFactors = F
+                      ,header=T)
+clinical_01A <- clinical[colnames(exp_01A),]
+exp01A <- exp_01A %>% t() %>% as.data.frame()
+identical(rownames(clinical_01A),rownames(exp01A))
+
+clinical.ESTIMATE_RESULT<-cbind(clinical_01A,ESTIMATE_result)
+write.csv(clinical.ESTIMATE_RESULT,file='clinical.ESTIMATE_result01A.csv')
+#仙桃学术作箱线图-分组比较图
+
+#----------------------差异分析
+setwd('Immune_DEG')
+library(BiocManager)
+#BiocManager::install('DESeq2')
+library(DESeq2)
+library(tidyverse)
+
+counts_01A <- read.table('counts01A.txt',sep='\t',row.names = 1,check.names = F,stringsAsFactors = F
+                      ,header=T)
+
+estimate <- read.table('ESTIMATE_result.txt',sep='\t',row.names = 1,check.names = F,stringsAsFactors = F
+                         ,header=T)
+#整理分组信息
+x <- 'ImmuneScore'
+med <- as.numeric(median(estimate[,x]))
+
+estimate <- as.data.frame(t(estimate))
+identical(colnames(counts_01A),colnames(estimate))
+conditions <- data.frame(sample=colnames(counts_01A),group=factor(ifelse(estimate[x,]>med,"high",'low'),levels = c('low','high'))) %>% column_to_rownames('sample')
+#差异分析准备工作
+dds <- DESeqDataSetFromMatrix(countData = counts_01A,colData = conditions,design = ~group)
+#开始差异分析
+dds_ana <- DESeq(dds)
+#重要
+resultsNames(dds_ana)
+#提取结果
+res <- results(dds_ana)
+save(res,file='DEG_ImmuneScore.Rda')
+
+#热图绘制
+DEG <- as.data.frame(res)
+#读取表达谱
+exp <- read.table('tpms01A_log2.txt',sep='\t',row.names = 1,check.names = F,stringsAsFactors = F
+                  ,header=T)
+#添加上下调基因
+
+
+
 
 
 
